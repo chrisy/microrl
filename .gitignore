@@ -2,3 +2,6 @@
 microrl_test
 tags
 *.swp
+src/.deps/
+src/.dirstamp
+src/microrl.lo
