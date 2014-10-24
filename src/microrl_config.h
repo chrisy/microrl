@@ -79,7 +79,7 @@ already initialize and ready to print message */
 
 /*
 New line symbol */
-#define _ENDL_CRLF
+#define _ENDL_CR
 #define ENDL "\r\n"
 
 /********** END CONFIG SECTION ************/
