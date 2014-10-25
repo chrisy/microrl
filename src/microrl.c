@@ -351,6 +351,13 @@ void microrl_set_echo (microrl_t *pThis, int echo)
 }
 
 //*****************************************************************************
+void microrl_set_prompt (microrl_t *pThis, char *prompt, int len)
+{
+	pThis->prompt_str = prompt;
+	pThis->prompt_len = len;
+}
+
+//*****************************************************************************
 void microrl_set_complete_callback (microrl_t * pThis, char ** (*get_completion)(void *, int, const char* const*))
 {
 	pThis->get_completion = get_completion;

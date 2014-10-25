@@ -101,6 +101,9 @@ void microrl_init (microrl_t * pThis, void *opaque, void (*print)(void *, const 
 // echo mode will enabled after user press Enter.
 void microrl_set_echo (microrl_t *pThis, int);
 
+// set the prompt and its display length
+void microrl_set_prompt (microrl_t *pThis, char *prompt, int len);
+
 // set pointer to callback complition func, that called when user press 'Tab'
 // callback func description:
 //   param: argc - argument count, argv - pointer array to token string
