@@ -124,4 +124,9 @@ void microrl_set_sigint_callback (microrl_t * pThis, void (*sigintf)(void *));
 // insert char to cmdline (for example call in usart RX interrupt)
 void microrl_insert_char (microrl_t * pThis, int ch);
 
+#ifdef _USE_HISTORY
+// print the command history
+void microrl_print_history (microrl_t * pThis);
+#endif
+
 #endif

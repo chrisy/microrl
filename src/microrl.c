@@ -23,7 +23,7 @@ int prompt_len = _PROMPT_LEN;
 #ifdef _HISTORY_DEBUG
 //*****************************************************************************
 // print buffer content on screen
-static void print_hist (ring_history_t * pThis)
+static void dump_hist (ring_history_t * pThis)
 {
 	printf ("\n");
 	for (int i = 0; i < _RING_HISTORY_LEN; i++) {
@@ -49,6 +49,42 @@ static void print_hist (ring_history_t * pThis)
 	printf ("\n");
 }
 #endif
+
+// print the command history using the 'print' handler
+void microrl_print_history (microrl_t * pRL)
+{
+	ring_history_t *pThis = &(pRL->ring_hist);
+	char str[_COMMAND_LINE_LEN];
+
+	int count = 1;
+	int idx = pThis->begin;
+	while (pThis->ring_buf[idx] != 0) {
+		int len = pThis->ring_buf[idx];
+		snprintf(str, _COMMAND_LINE_LEN, "%3d ", count);
+		pRL->print(pRL->opaque, str);
+
+		if (idx+len >= _RING_HISTORY_LEN) {
+			// split in two
+			int l = _RING_HISTORY_LEN-(idx+1);
+			memcpy(str, pThis->ring_buf+idx+1, _RING_HISTORY_LEN-(idx+1));
+			memcpy(str+l, pThis->ring_buf, len - l);
+			idx = len - l;
+		} else {
+			memcpy(str, pThis->ring_buf+idx+1, len);
+			idx = idx + len + 1;
+		}
+
+		for (int i=0; i<len; i++)
+			if (!str[i])
+				str[i] = ' ';
+		str[len] = '\0';
+
+		pRL->print(pRL->opaque, str);
+		pRL->print(pRL->opaque, ENDL);
+		count++;
+	}
+}
+
 
 //*****************************************************************************
 // remove older message from ring buffer
@@ -105,7 +141,7 @@ static void hist_save_line (ring_history_t * pThis, char * line, int len)
 	pThis->ring_buf [pThis->end] = 0;
 	pThis->cur = 0;
 #ifdef _HISTORY_DEBUG
-	print_hist (pThis);
+	dump_hist (pThis);
 #endif
 }
 
@@ -377,6 +413,7 @@ void microrl_set_sigint_callback (microrl_t * pThis, void (*sigintf)(void *))
 #endif
 
 #ifdef _USE_ESC_SEQ
+#ifdef _USE_HISTORY
 static void hist_search (microrl_t * pThis, int dir)
 {
 	int len = hist_restore_line (&pThis->ring_hist, pThis->cmdline, dir);
@@ -386,6 +423,7 @@ static void hist_search (microrl_t * pThis, int dir)
 		terminal_print_line (pThis, 0, pThis->cursor);
 	}
 }
+#endif
 
 //*****************************************************************************
 // handling escape sequences
