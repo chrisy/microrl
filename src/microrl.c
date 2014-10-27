@@ -429,49 +429,72 @@ static void hist_search (microrl_t * pThis, int dir)
 // handling escape sequences
 static int escape_process (microrl_t * pThis, char ch)
 {
-	if (ch == '[') {
-		pThis->escape_seq = _ESC_BRACKET;
-		return 0;
-	} else if (pThis->escape_seq == _ESC_BRACKET) {
-		if (ch == 'A') {
+	if (pThis->escape_seq == _ESC_BRACKET) {
+		switch (ch) {
+		case 'A':
 #ifdef _USE_HISTORY
 			hist_search (pThis, _HIST_UP);
 #endif
 			return 1;
-		} else if (ch == 'B') {
+
+		case 'B':
 #ifdef _USE_HISTORY
 			hist_search (pThis, _HIST_DOWN);
 #endif
 			return 1;
-		} else if (ch == 'C') {
+
+		case 'C':
 			if (pThis->cursor < pThis->cmdlen) {
 				terminal_move_cursor (pThis, 1);
 				pThis->cursor++;
 			}
 			return 1;
-		} else if (ch == 'D') {
+
+		case 'D':
 			if (pThis->cursor > 0) {
 				terminal_move_cursor (pThis, -1);
 				pThis->cursor--;
 			}
 			return 1;
-		} else if (ch == '7') {
+
+		case '7':
+		case '1': // this is odd, but it's what my terminal sends
 			pThis->escape_seq = _ESC_HOME;
 			return 0;
-		} else if (ch == '8') {
+
+		case '8':
 			pThis->escape_seq = _ESC_END;
 			return 0;
 		}
+
 	} else if (ch == '~') {
 		if (pThis->escape_seq == _ESC_HOME) {
 			terminal_reset_cursor (pThis);
 			pThis->cursor = 0;
 			return 1;
+
 		} else if (pThis->escape_seq == _ESC_END) {
 			terminal_move_cursor (pThis, pThis->cmdlen-pThis->cursor);
 			pThis->cursor = pThis->cmdlen;
 			return 1;
 		}
+
+	} else if (pThis->escape_seq == _ESC_O) {
+		switch(ch) {
+		case 'F':
+			// weird, but it's what my terminal sends!
+			terminal_move_cursor (pThis, pThis->cmdlen-pThis->cursor);
+			pThis->cursor = pThis->cmdlen;
+			return 1;
+		}
+
+	} else if (ch == '[') {
+		pThis->escape_seq = _ESC_BRACKET;
+		return 0;
+
+	} else if (ch == 'O') {
+		pThis->escape_seq = _ESC_O;
+		return 0;
 	}
 
 	/* unknown escape sequence, stop */
@@ -616,7 +639,7 @@ void microrl_insert_char (microrl_t * pThis, int ch)
 #ifdef _USE_ESC_SEQ
 	if (pThis->escape) {
 		if (escape_process(pThis, ch))
-			pThis->escape = 0;
+			pThis->escape = false;
 	} else {
 #endif
 		switch (ch) {
@@ -659,7 +682,8 @@ void microrl_insert_char (microrl_t * pThis, int ch)
 			//-----------------------------------------------------
 			case KEY_ESC:
 #ifdef _USE_ESC_SEQ
-				pThis->escape = 1;
+				pThis->escape = true;
+				pThis->escape_seq = _ESC_NONE;
 #endif
 			break;
 			//-----------------------------------------------------

@@ -51,10 +51,13 @@
 // direction of history navigation
 #define _HIST_UP   0
 #define _HIST_DOWN 1
+
 // esc seq internal codes
+#define _ESC_NONE     0
 #define _ESC_BRACKET  1
 #define _ESC_HOME     2
 #define _ESC_END      3
+#define _ESC_O        4
 
 #ifdef _USE_HISTORY
 // history struct, contain internal variable
