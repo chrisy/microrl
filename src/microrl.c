@@ -227,20 +227,43 @@ static int split (microrl_t * pThis, int limit, char const ** tkn_arr)
 {
 	int i = 0;
 	int ind = 0;
+	char quoted = 0;
+	char escape = 0;
+
 	while (1) {
-		// go to the first whitespace (zerro for us)
-		while ((pThis->cmdline [ind] == '\0') && (ind < limit)) {
+		// go to the first whitespace
+		while ((pThis->cmdline [ind] == '\0' || pThis->cmdline [ind] == ' ') && (ind < limit)) {
 			ind++;
 		}
 		if (!(ind < limit)) return i;
 		tkn_arr[i++] = pThis->cmdline + ind;
+		tkn_arr[i] = NULL;
 		if (i >= _COMMAND_TOKEN_NMB) {
 			return -1;
 		}
-		// go to the first NOT whitespace (not zerro for us)
-		while ((pThis->cmdline [ind] != '\0') && (ind < limit)) {
+		// go to the first NOT whitespace
+		while (pThis->cmdline [ind] != '\0' && (pThis->cmdline [ind] != ' ' || quoted) && (ind < limit)) {
+			if (!escape && pThis->cmdline [ind] == '"') {
+				// we eat quote marks
+				strcpy(pThis->cmdline + ind, pThis->cmdline + ind + 1);
+				ind--;
+				quoted = !quoted;
+			}
+
+			if (pThis->cmdline[ind] == '\\') {
+				// we eat escapes
+				strcpy(pThis->cmdline + ind, pThis->cmdline + ind + 1);
+				ind--;
+				escape = 1;
+			} else {
+				escape = 0;
+			}
+
 			ind++;
 		}
+		pThis->cmdline [ind] = '\0';
+		escape = 0;
+		quoted = 0;
 		if (!(ind < limit)) return i;
 	}
 	return i;
@@ -404,6 +427,7 @@ void microrl_set_execute_callback (microrl_t * pThis, int (*execute)(void *, int
 {
 	pThis->execute = execute;
 }
+
 #ifdef _USE_CTLR_C
 //*****************************************************************************
 void microrl_set_sigint_callback (microrl_t * pThis, void (*sigintf)(void *))
@@ -513,9 +537,6 @@ static int microrl_insert_text (microrl_t * pThis, char * text, int len)
 						 pThis->cmdlen - pThis->cursor);
 		for (i = 0; i < len; i++) {
 			pThis->cmdline [pThis->cursor + i] = text [i];
-			if (pThis->cmdline [pThis->cursor + i] == ' ') {
-				pThis->cmdline [pThis->cursor + i] = 0;
-			}
 		}
 		pThis->cursor += len;
 		pThis->cmdlen += len;
@@ -564,7 +585,7 @@ static int common_len (char ** arr)
 //*****************************************************************************
 static void microrl_get_complite (microrl_t * pThis)
 {
-	char const * tkn_arr[_COMMAND_TOKEN_NMB];
+	char const * tkn_arr[_COMMAND_TOKEN_NMB+1];
 	char ** compl_token;
 
 	if (pThis->get_completion == NULL) // callback was not set
@@ -606,7 +627,7 @@ static void microrl_get_complite (microrl_t * pThis)
 
 //*****************************************************************************
 void new_line_handler(microrl_t * pThis){
-	char const * tkn_arr [_COMMAND_TOKEN_NMB];
+	char const * tkn_arr [_COMMAND_TOKEN_NMB+1];
 	int status;
 
 	terminal_newline (pThis);
